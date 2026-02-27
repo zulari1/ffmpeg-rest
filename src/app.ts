@@ -13,8 +13,21 @@ import { registerMediaRoutes } from '~/components/media/controller';
 export function createApp() {
   const app = new OpenAPIHono();
 
+  // Public healthcheck endpoint (no auth, GET 200 OK)
+  app.get('/health', (c) =>
+    c.json(
+      {
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      },
+      200
+    )
+  );
+
   if (env.AUTH_TOKEN) {
     logger.info('🔒 Bearer authentication enabled');
+    // Protect all other routes with bearer auth
     app.use('/*', bearerAuth({ token: env.AUTH_TOKEN }));
   } else {
     logger.warn('⚠️  Authentication disabled - set AUTH_TOKEN to enable');
@@ -54,7 +67,7 @@ export function createApp() {
    * LLM-friendly documentation endpoint
    * Serves the API documentation in markdown format for LLMs
    *
-   * @see https://llmstxt.org/
+   * @see [https://llmstxt.org/](https://llmstxt.org/)
    */
   app.get('/llms.txt', async (c) => {
     const openApiDoc = app.getOpenAPI31Document({
@@ -78,3 +91,4 @@ export function createApp() {
 
   return app;
 }
+
